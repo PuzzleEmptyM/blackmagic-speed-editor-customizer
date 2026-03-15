@@ -8,6 +8,8 @@ CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.json')
 
 # Action types
 ACTION_HOTKEY      = "hotkey"
+ACTION_HOLD_KEY    = "hold_key"
+ACTION_TOGGLE_HOLD = "toggle_hold"
 ACTION_APP_SWITCH  = "app_switch"
 ACTION_OBS_SCENE   = "obs_scene"
 ACTION_OBS_TOGGLE  = "obs_toggle"

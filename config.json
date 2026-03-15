@@ -6,26 +6,27 @@
   },
   "layers": {
     "default": {
-      "name": "Default",
+      "name": "Primary",
       "buttons": {
         "IN": {
           "action": "none"
         },
         "CAM1": {
-          "action": "obs_scene",
-          "scene": "Scene"
+          "action": "none"
         },
         "CAM2": {
-          "action": "obs_scene",
-          "scene": "just desktop"
+          "action": "none"
         },
         "CAM3": {
-          "action": "obs_scene",
-          "scene": "wide angle camera"
+          "action": "none"
         },
         "SMART_INSRT": {
           "action": "layer_push",
           "layer": "c177ad81"
+        },
+        "APPND": {
+          "action": "layer_push",
+          "layer": "e5b52d36"
         }
       }
     },
@@ -66,6 +67,74 @@
         },
         "SMART_INSRT": {
           "action": "layer_pop"
+        },
+        "SMTH_CUT": {
+          "action": "toggle_hold",
+          "keys": "alt"
+        },
+        "CAM1": {
+          "action": "hotkey",
+          "keys": "1"
+        },
+        "CAM2": {
+          "action": "hotkey",
+          "keys": "2"
+        },
+        "CAM3": {
+          "action": "hotkey",
+          "keys": "3"
+        },
+        "CAM4": {
+          "action": "hotkey",
+          "keys": "4"
+        },
+        "CAM5": {
+          "action": "hotkey",
+          "keys": "5"
+        },
+        "CAM6": {
+          "action": "hotkey",
+          "keys": "6"
+        },
+        "CAM7": {
+          "action": "hotkey",
+          "keys": "7"
+        },
+        "CAM8": {
+          "action": "hotkey",
+          "keys": "8"
+        },
+        "CAM9": {
+          "action": "hotkey",
+          "keys": "9"
+        },
+        "CUT": {
+          "action": "hotkey",
+          "keys": "left"
+        },
+        "DIS": {
+          "action": "hotkey",
+          "keys": "right"
+        }
+      }
+    },
+    "e5b52d36": {
+      "name": "OBS",
+      "buttons": {
+        "APPND": {
+          "action": "layer_pop"
+        },
+        "CAM1": {
+          "action": "obs_scene",
+          "scene": "Scene"
+        },
+        "CAM2": {
+          "action": "obs_scene",
+          "scene": "just desktop"
+        },
+        "CAM3": {
+          "action": "obs_scene",
+          "scene": "wide angle camera"
         }
       }
     }

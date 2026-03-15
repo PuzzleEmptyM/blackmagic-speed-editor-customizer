@@ -25,6 +25,7 @@ from actions import app_switch
 class Signals(QObject):
     button_pressed        = pyqtSignal(str)   # key_name
     layer_runtime_changed = pyqtSignal(str)   # layer_id (from HID thread → GUI thread)
+    device_status         = pyqtSignal(str)   # status string (from HID thread → GUI thread)
 
 
 # ---------------------------------------------------------------------------
@@ -51,7 +52,7 @@ class ActionPanel(QWidget):
         type_row = QHBoxLayout()
         type_row.addWidget(QLabel("Action:"))
         self.action_type = QComboBox()
-        self.action_type.addItems(["None", "Hotkey", "App Switch", "OBS: Switch Scene", "OBS: Toggle Stream", "OBS: Toggle Record", "OBS: Toggle Mic Mute", "Layer: Push", "Layer: Back"])
+        self.action_type.addItems(["None", "Hotkey", "Hold Key", "Toggle Hold", "App Switch", "OBS: Switch Scene", "OBS: Toggle Stream", "OBS: Toggle Record", "OBS: Toggle Mic Mute", "Layer: Push", "Layer: Back"])
         self.action_type.currentIndexChanged.connect(self._on_type_changed)
         type_row.addWidget(self.action_type)
         layout.addLayout(type_row)
@@ -73,7 +74,27 @@ class ActionPanel(QWidget):
         hkl.addWidget(QLabel("Separate keys with +. Use: ctrl, shift, alt, win,\nf1-f12, or any single letter/number."))
         self.stack.addWidget(hotkey_page)
 
-        # Page 2 — App Switch
+        # Page 2 — Hold Key
+        hold_page = QWidget()
+        hold_l = QVBoxLayout(hold_page)
+        hold_l.addWidget(QLabel("Key(s) to hold (e.g. alt):"))
+        self.hold_input = QLineEdit()
+        self.hold_input.setPlaceholderText("alt")
+        hold_l.addWidget(self.hold_input)
+        hold_l.addWidget(QLabel("Held while the Speed Editor button is physically held.\nRelease the button to release the key."))
+        self.stack.addWidget(hold_page)
+
+        # Page 3 — Toggle Hold
+        toggle_hold_page = QWidget()
+        th_l = QVBoxLayout(toggle_hold_page)
+        th_l.addWidget(QLabel("Key(s) to latch (e.g. alt):"))
+        self.toggle_hold_input = QLineEdit()
+        self.toggle_hold_input.setPlaceholderText("alt")
+        th_l.addWidget(self.toggle_hold_input)
+        th_l.addWidget(QLabel("Press once to hold the key down.\nPress again to release it."))
+        self.stack.addWidget(toggle_hold_page)
+
+        # Page 4 — App Switch
         app_page = QWidget()
         apl = QVBoxLayout(app_page)
         apl.addWidget(QLabel("Window title contains:"))
@@ -154,17 +175,19 @@ class ActionPanel(QWidget):
         atype = action.get("action", cfg.ACTION_NONE)
 
         type_map = {
-            cfg.ACTION_NONE:        0,
-            cfg.ACTION_HOTKEY:      1,
-            cfg.ACTION_APP_SWITCH:  2,
-            cfg.ACTION_OBS_SCENE:   3,
-            cfg.ACTION_OBS_TOGGLE:  {"stream": 4, "record": 5, "mute_mic": 6},
-            cfg.ACTION_LAYER_PUSH:  7,
-            cfg.ACTION_LAYER_POP:   8,
+            cfg.ACTION_NONE:         0,
+            cfg.ACTION_HOTKEY:       1,
+            cfg.ACTION_HOLD_KEY:     2,
+            cfg.ACTION_TOGGLE_HOLD:  3,
+            cfg.ACTION_APP_SWITCH:   4,
+            cfg.ACTION_OBS_SCENE:    5,
+            cfg.ACTION_OBS_TOGGLE:   {"stream": 6, "record": 7, "mute_mic": 8},
+            cfg.ACTION_LAYER_PUSH:   9,
+            cfg.ACTION_LAYER_POP:    10,
         }
 
         if atype == cfg.ACTION_OBS_TOGGLE:
-            idx = type_map[atype].get(action.get("toggle", "stream"), 4)
+            idx = type_map[atype].get(action.get("toggle", "stream"), 6)
         else:
             idx = type_map.get(atype, 0)
 
@@ -173,6 +196,10 @@ class ActionPanel(QWidget):
 
         if atype == cfg.ACTION_HOTKEY:
             self.hotkey_input.setText(action.get("keys", ""))
+        elif atype == cfg.ACTION_HOLD_KEY:
+            self.hold_input.setText(action.get("keys", ""))
+        elif atype == cfg.ACTION_TOGGLE_HOLD:
+            self.toggle_hold_input.setText(action.get("keys", ""))
         elif atype == cfg.ACTION_APP_SWITCH:
             self.app_input.setText(action.get("app", ""))
         elif atype == cfg.ACTION_OBS_SCENE:
@@ -191,19 +218,23 @@ class ActionPanel(QWidget):
         elif idx == 1:
             action = {"action": cfg.ACTION_HOTKEY, "keys": self.hotkey_input.text().strip()}
         elif idx == 2:
-            action = {"action": cfg.ACTION_APP_SWITCH, "app": self.app_input.text().strip()}
+            action = {"action": cfg.ACTION_HOLD_KEY, "keys": self.hold_input.text().strip()}
         elif idx == 3:
-            action = {"action": cfg.ACTION_OBS_SCENE, "scene": self.obs_scene.currentText()}
+            action = {"action": cfg.ACTION_TOGGLE_HOLD, "keys": self.toggle_hold_input.text().strip()}
         elif idx == 4:
-            action = {"action": cfg.ACTION_OBS_TOGGLE, "toggle": "stream"}
+            action = {"action": cfg.ACTION_APP_SWITCH, "app": self.app_input.text().strip()}
         elif idx == 5:
-            action = {"action": cfg.ACTION_OBS_TOGGLE, "toggle": "record"}
+            action = {"action": cfg.ACTION_OBS_SCENE, "scene": self.obs_scene.currentText()}
         elif idx == 6:
-            action = {"action": cfg.ACTION_OBS_TOGGLE, "toggle": "mute_mic"}
+            action = {"action": cfg.ACTION_OBS_TOGGLE, "toggle": "stream"}
         elif idx == 7:
+            action = {"action": cfg.ACTION_OBS_TOGGLE, "toggle": "record"}
+        elif idx == 8:
+            action = {"action": cfg.ACTION_OBS_TOGGLE, "toggle": "mute_mic"}
+        elif idx == 9:
             action = {"action": cfg.ACTION_LAYER_PUSH,
                       "layer": self.layer_push_combo.currentData() or ""}
-        elif idx == 8:
+        elif idx == 10:
             action = {"action": cfg.ACTION_LAYER_POP}
         else:
             return
@@ -275,9 +306,11 @@ class SettingsTab(QWidget):
 # ---------------------------------------------------------------------------
 
 ACTION_COLORS = {
-    cfg.ACTION_NONE:        "#3a3a3a",
-    cfg.ACTION_HOTKEY:      "#1a4a7a",
-    cfg.ACTION_APP_SWITCH:  "#1a5a2a",
+    cfg.ACTION_NONE:         "#3a3a3a",
+    cfg.ACTION_HOTKEY:       "#1a4a7a",
+    cfg.ACTION_HOLD_KEY:     "#1a6a6a",
+    cfg.ACTION_TOGGLE_HOLD:  "#2a5a5a",
+    cfg.ACTION_APP_SWITCH:   "#1a5a2a",
     cfg.ACTION_OBS_SCENE:   "#6a2a1a",
     cfg.ACTION_OBS_TOGGLE:  "#5a1a6a",
     cfg.ACTION_LAYER_PUSH:  "#7a5a1a",
@@ -362,6 +395,10 @@ def _get_btn_display_label(key_name: str, original_label: str, config: dict, lay
         return original_label
     elif atype == cfg.ACTION_HOTKEY:
         return action.get("keys", "").strip() or original_label
+    elif atype == cfg.ACTION_HOLD_KEY:
+        return f"hold: {action.get('keys', '').strip()}" or original_label
+    elif atype == cfg.ACTION_TOGGLE_HOLD:
+        return f"latch: {action.get('keys', '').strip()}" or original_label
     elif atype == cfg.ACTION_APP_SWITCH:
         return action.get("app", "").strip() or original_label
     elif atype == cfg.ACTION_OBS_SCENE:
@@ -547,6 +584,10 @@ class MainWindow(QMainWindow):
         self._runtime_layer_id = cfg.DEFAULT_LAYER_ID
         self._populate_layer_tabs()
         self.signals.layer_runtime_changed.connect(self._on_runtime_layer_changed)
+        self.signals.device_status.connect(self._on_device_status)
+
+        self._status_bar = self.statusBar()
+        self._status_bar.showMessage('Waiting for Speed Editor…')
 
         # --- Settings tab ---
         self.settings_tab = SettingsTab(self._config)
@@ -641,6 +682,9 @@ class MainWindow(QMainWindow):
             self._populate_layer_tabs()
             self.layer_tabs.setCurrentIndex(0)
 
+    def _on_device_status(self, status: str):
+        self._status_bar.showMessage(f'Speed Editor: {status}')
+
     def _select_button(self, key_name: str):
         self.action_panel.load_button(key_name, self._config, self._layer_id)
 
@@ -659,14 +703,21 @@ class MainWindow(QMainWindow):
 # ---------------------------------------------------------------------------
 
 def dispatch(button_name: str, config: dict, layer_id: str = cfg.DEFAULT_LAYER_ID,
-             on_push=None, on_pop=None):
-    """
-    Dispatch a button press.
-    on_push(layer_id) — called when a layer_push action fires.
-    on_pop()          — called when a layer_pop action fires.
-    """
+             on_push=None, on_pop=None, is_release: bool = False):
     action = cfg.get_button(config, button_name, layer_id)
     atype = action.get("action", cfg.ACTION_NONE)
+
+    if atype == cfg.ACTION_HOLD_KEY:
+        keys = action.get("keys", "")
+        if is_release:
+            hotkey_action.release_keys(keys)
+        else:
+            hotkey_action.press_keys(keys)
+        return
+
+    # All other actions only fire on press, not release
+    if is_release:
+        return
 
     if atype == cfg.ACTION_HOTKEY:
         hotkey_action.send(action.get("keys", ""))
