@@ -2,19 +2,33 @@
 
 import json
 import os
+import sys
 import uuid
 
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.json')
+
+def _app_dir() -> str:
+    """Return the directory that should hold config.json.
+    When running as a PyInstaller bundle sys.frozen is set and sys.executable
+    points to the .exe, so we place config.json next to it.
+    When running from source, use the script directory as before."""
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+CONFIG_FILE = os.path.join(_app_dir(), 'config.json')
 
 # Action types
 ACTION_HOTKEY      = "hotkey"
 ACTION_HOLD_KEY    = "hold_key"
 ACTION_TOGGLE_HOLD = "toggle_hold"
 ACTION_APP_SWITCH  = "app_switch"
+ACTION_APP_LAUNCH  = "app_launch"
 ACTION_OBS_SCENE   = "obs_scene"
 ACTION_OBS_TOGGLE  = "obs_toggle"
 ACTION_LAYER_PUSH  = "layer_push"
 ACTION_LAYER_POP   = "layer_pop"
+ACTION_DIAL_MODE   = "dial_mode"   # sets runtime dial override (sys_vol / app_vol / brightness / normal)
 ACTION_NONE        = "none"
 
 OBS_TOGGLE_OPTIONS = ["stream", "record", "mute_mic"]
@@ -64,6 +78,40 @@ def get_button(config: dict, button_name: str, layer_id: str = DEFAULT_LAYER_ID)
             .get(layer_id, {})
             .get("buttons", {})
             .get(button_name, {"action": ACTION_NONE}))
+
+
+def get_dial_sensitivity(config: dict, mode: str, layer_id: str = DEFAULT_LAYER_ID) -> int:
+    """Return ticks-per-action threshold for this dial mode (default 1)."""
+    return (config["layers"]
+            .get(layer_id, {})
+            .get("dial_sensitivity", {})
+            .get(mode, 1))
+
+
+def set_dial_sensitivity(config: dict, mode: str, threshold: int, layer_id: str = DEFAULT_LAYER_ID):
+    if layer_id not in config["layers"]:
+        config["layers"][layer_id] = {"name": layer_id, "buttons": {}}
+    layer = config["layers"][layer_id]
+    layer.setdefault("dial_sensitivity", {})[mode] = threshold
+
+
+def get_dial_action(config: dict, mode: str, direction: str, layer_id: str = DEFAULT_LAYER_ID) -> dict:
+    return (config["layers"]
+            .get(layer_id, {})
+            .get("dial", {})
+            .get(mode, {})
+            .get(direction, {"action": ACTION_NONE}))
+
+
+def set_dial_action(config: dict, mode: str, direction: str, action: dict, layer_id: str = DEFAULT_LAYER_ID):
+    if layer_id not in config["layers"]:
+        config["layers"][layer_id] = {"name": layer_id, "buttons": {}}
+    layer = config["layers"][layer_id]
+    if "dial" not in layer:
+        layer["dial"] = {}
+    if mode not in layer["dial"]:
+        layer["dial"][mode] = {}
+    layer["dial"][mode][direction] = action
 
 
 def set_button(config: dict, button_name: str, action: dict, layer_id: str = DEFAULT_LAYER_ID):
