@@ -3,31 +3,11 @@
 # Run with:  python -m PyInstaller build.spec --clean
 
 import sys
-import os
-import glob as _glob
 from PyInstaller.utils.hooks import collect_all, collect_submodules
 
 block_cipher = None
 IS_WIN = sys.platform == 'win32'
 IS_MAC = sys.platform == 'darwin'
-
-# ---------------------------------------------------------------------------
-# hidapi native library — must land at bundle root so ctypes can find it
-# collect_all puts it in hid/ subdirectory which ctypes doesn't search
-# ---------------------------------------------------------------------------
-
-try:
-    import hid as _hid_pkg
-    _hid_dir = os.path.dirname(_hid_pkg.__file__)
-    _hid_native = (
-        _glob.glob(os.path.join(_hid_dir, 'hidapi*.dll')) +
-        _glob.glob(os.path.join(_hid_dir, 'libhidapi*.dll')) +
-        _glob.glob(os.path.join(_hid_dir, '*.dylib')) +
-        _glob.glob(os.path.join(_hid_dir, '*.so*'))
-    )
-    hid_root_bins = [(lib, '.') for lib in _hid_native]
-except Exception:
-    hid_root_bins = []
 
 # ---------------------------------------------------------------------------
 # Platform-specific package collection
@@ -74,7 +54,7 @@ else:  # macOS
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=hid_b + hid_root_bins + sbc_b + plat_binaries,
+    binaries=hid_b + sbc_b + plat_binaries,
     datas=hid_d + sbc_d + plat_datas,
     hiddenimports=hid_h + sbc_h + plat_hidden,
     hookspath=[],

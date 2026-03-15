@@ -21,7 +21,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install PyQt6 hid pynput pywin32 obsws-python pycaw screen-brightness-control pyinstaller pyinstaller-hooks-contrib
+          pip install PyQt6 hidapi pynput pywin32 obsws-python pycaw screen-brightness-control pyinstaller pyinstaller-hooks-contrib
 
       - name: Build
         run: python -m PyInstaller build.spec --clean
@@ -48,12 +48,9 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install system dependencies
-        run: brew install hidapi
-
       - name: Install dependencies
         run: |
-          pip install PyQt6 hid pynput obsws-python screen-brightness-control pyinstaller pyinstaller-hooks-contrib
+          pip install PyQt6 hidapi pynput obsws-python screen-brightness-control pyinstaller pyinstaller-hooks-contrib
 
       - name: Build
         run: python -m PyInstaller build.spec --clean

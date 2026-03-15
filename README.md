@@ -71,7 +71,7 @@ Create a virtual environment and install dependencies:
 
 ```
 python -m venv .venv
-.venv\Scripts\pip install PyQt6 hid pynput pywin32 obsws-python pycaw screen-brightness-control
+.venv\Scripts\pip install PyQt6 hidapi pynput pywin32 obsws-python pycaw screen-brightness-control
 ```
 
 Then run:
