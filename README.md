@@ -9,11 +9,10 @@ A desktop app for remapping the buttons on a Blackmagic Design Speed Editor to a
 | Platform | File |
 |----------|------|
 | Windows | `SpeedEditorCustomizer-Windows.zip` — extract and run `SpeedEditorCustomizer.exe` |
-| macOS (Apple Silicon only) | `SpeedEditorCustomizer-macOS.zip` — extract and open `SpeedEditorCustomizer.app` |
+| macOS — Apple Silicon (M1/M2/M3) | `SpeedEditorCustomizer-macOS-AppleSilicon.zip` — extract and open `SpeedEditorCustomizer.app` |
+| macOS — Intel | `SpeedEditorCustomizer-macOS-Intel.zip` — extract and open `SpeedEditorCustomizer.app` |
 
 > Builds are updated automatically whenever the main branch changes.
->
-> **Intel Mac users:** the pre-built download will not run on Intel Macs. Free CI runners no longer support Intel Mac builds. See the [Running from source](#running-from-source-mac) section below.
 
 ---
 

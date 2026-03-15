@@ -37,10 +37,10 @@ jobs:
           path: dist/SpeedEditorCustomizer-Windows.zip
 
   # ---------------------------------------------------------------------------
-  # macOS — produces SpeedEditorCustomizer-macOS.zip
+  # macOS Apple Silicon — arm64, native on M1/M2/M3 Macs
   # ---------------------------------------------------------------------------
-  build-macos:
-    runs-on: macos-latest   # arm64 (Apple Silicon) — Intel Macs must run from source
+  build-macos-arm64:
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -58,19 +58,53 @@ jobs:
         run: python -m PyInstaller build.spec --clean
 
       - name: Zip .app bundle
-        run: cd dist && zip -r SpeedEditorCustomizer-macOS.zip SpeedEditorCustomizer.app
+        run: cd dist && zip -r SpeedEditorCustomizer-macOS-AppleSilicon.zip SpeedEditorCustomizer.app
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SpeedEditorCustomizer-macOS
-          path: dist/SpeedEditorCustomizer-macOS.zip
+          name: SpeedEditorCustomizer-macOS-AppleSilicon
+          path: dist/SpeedEditorCustomizer-macOS-AppleSilicon.zip
 
   # ---------------------------------------------------------------------------
-  # Release — runs after both builds succeed, publishes to "Latest" release
+  # macOS Intel — x86_64, built via Rosetta 2 on the arm64 runner
+  # ---------------------------------------------------------------------------
+  build-macos-intel:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install universal2 Python 3.12 (for x86_64 slice)
+        run: |
+          curl -fsSL -o /tmp/python312.pkg \
+            "https://www.python.org/ftp/python/3.12.9/python-3.12.9-macos11.pkg"
+          sudo installer -pkg /tmp/python312.pkg -target /
+
+      - name: Install dependencies (x86_64 via Rosetta 2)
+        run: |
+          arch -x86_64 /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m pip install \
+            PyQt6 hidapi pynput obsws-python screen-brightness-control pyinstaller pyinstaller-hooks-contrib
+
+      - name: Build (x86_64 / Intel)
+        env:
+          MACOSX_DEPLOYMENT_TARGET: '12.0'
+        run: |
+          arch -x86_64 /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m PyInstaller build.spec --clean
+
+      - name: Zip .app bundle
+        run: cd dist && zip -r SpeedEditorCustomizer-macOS-Intel.zip SpeedEditorCustomizer.app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpeedEditorCustomizer-macOS-Intel
+          path: dist/SpeedEditorCustomizer-macOS-Intel.zip
+
+  # ---------------------------------------------------------------------------
+  # Release — runs after all three builds, publishes to "Latest" release
   # ---------------------------------------------------------------------------
   release:
-    needs: [build-windows, build-macos]
+    needs: [build-windows, build-macos-arm64, build-macos-intel]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -81,10 +115,16 @@ jobs:
           name: SpeedEditorCustomizer-Windows
           path: artifacts/
 
-      - name: Download macOS build
+      - name: Download macOS Apple Silicon build
         uses: actions/download-artifact@v4
         with:
-          name: SpeedEditorCustomizer-macOS
+          name: SpeedEditorCustomizer-macOS-AppleSilicon
+          path: artifacts/
+
+      - name: Download macOS Intel build
+        uses: actions/download-artifact@v4
+        with:
+          name: SpeedEditorCustomizer-macOS-Intel
           path: artifacts/
 
       - name: Publish release
@@ -97,4 +137,5 @@ jobs:
           make_latest: true
           files: |
             artifacts/SpeedEditorCustomizer-Windows.zip
-            artifacts/SpeedEditorCustomizer-macOS.zip
+            artifacts/SpeedEditorCustomizer-macOS-AppleSilicon.zip
+            artifacts/SpeedEditorCustomizer-macOS-Intel.zip
