@@ -31,7 +31,7 @@ A desktop app for remapping the buttons on a Blackmagic Design Speed Editor to a
 **Button actions**
 
 - **Hotkey** - tap a key combination (e.g. `ctrl+shift+s`)
-- **Hold Key** - hold a modifier key down for as long as the Speed Editor button is physically held
+- **Hold Key** - hold a modifier key (e.g. alt, shift, delete, etc.) down for as long as the Speed Editor button is physically held
 - **Toggle Hold** - latch a modifier key down on first press, release it on second press
 - **App Switch** - bring any open window to focus by title substring
 - **App Launch** - launch an application by path, Start Menu shortcut, or URI
