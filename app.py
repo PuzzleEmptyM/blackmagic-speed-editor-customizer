@@ -18,6 +18,8 @@ import config as cfg
 from actions import obs as obs_action
 from actions import hotkey as hotkey_action
 from actions import app_switch
+import auth
+import cloud_sync
 
 
 # ---------------------------------------------------------------------------
@@ -542,6 +544,33 @@ class SettingsTab(QWidget):
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
+        # ── Account ──────────────────────────────────────────────────────────
+        account_group = QGroupBox("Account")
+        account_layout = QVBoxLayout(account_group)
+
+        self._account_email = QLabel()
+        account_layout.addWidget(self._account_email)
+
+        btn_row = QHBoxLayout()
+        self._signin_btn  = QPushButton("Sign In")
+        self._signout_btn = QPushButton("Sign Out")
+        self._sync_btn    = QPushButton("Sync Now")
+        btn_row.addWidget(self._signin_btn)
+        btn_row.addWidget(self._signout_btn)
+        btn_row.addWidget(self._sync_btn)
+        account_layout.addLayout(btn_row)
+
+        self._sync_status = QLabel("")
+        account_layout.addWidget(self._sync_status)
+
+        self._signin_btn.clicked.connect(self._sign_in)
+        self._signout_btn.clicked.connect(self._sign_out)
+        self._sync_btn.clicked.connect(self._sync_now)
+
+        layout.addWidget(account_group)
+        self._refresh_account_ui()
+
+        # ── OBS WebSocket ─────────────────────────────────────────────────────
         obs_group = QGroupBox("OBS WebSocket")
         obs_layout = QGridLayout(obs_group)
         obs_layout.addWidget(QLabel("Host:"), 0, 0)
@@ -560,6 +589,57 @@ class SettingsTab(QWidget):
         self.obs_status = QLabel("Not connected")
         obs_layout.addWidget(self.obs_status, 4, 0, 1, 2)
         layout.addWidget(obs_group)
+
+    def _refresh_account_ui(self):
+        signed_in = auth.is_signed_in()
+        email = auth.get_user_email() or "Signed in"
+        self._account_email.setText(email if signed_in else "Not signed in")
+        self._signin_btn.setVisible(not signed_in)
+        self._signout_btn.setVisible(signed_in)
+        self._sync_btn.setEnabled(signed_in)
+
+    def _sign_in(self):
+        self._signin_btn.setEnabled(False)
+        self._signin_btn.setText("Opening browser…")
+
+        def _do():
+            ok = auth.sign_in()
+            self._signin_btn.setEnabled(True)
+            self._signin_btn.setText("Sign In")
+            if ok:
+                self._refresh_account_ui()
+                self._set_sync_status("Signed in. Syncing…", "gray")
+                self._sync_now()
+            else:
+                self._set_sync_status("Sign-in timed out or was cancelled.", "red")
+
+        threading.Thread(target=_do, daemon=True).start()
+
+    def _sign_out(self):
+        auth.sign_out()
+        self._refresh_account_ui()
+        self._set_sync_status("Signed out.", "gray")
+
+    def _sync_now(self):
+        if not auth.is_signed_in():
+            return
+        self._sync_btn.setEnabled(False)
+        self._set_sync_status("Syncing…", "gray")
+
+        def _do():
+            try:
+                cloud_sync.sync_from_cloud(self._config)
+                self._set_sync_status("Synced successfully.", "green")
+            except Exception as e:
+                self._set_sync_status(f"Sync failed: {e}", "red")
+            finally:
+                self._sync_btn.setEnabled(True)
+
+        threading.Thread(target=_do, daemon=True).start()
+
+    def _set_sync_status(self, text: str, color: str):
+        self._sync_status.setText(text)
+        self._sync_status.setStyleSheet(f"color: {color}")
 
     def _connect_obs(self):
         host = self.obs_host.text()
