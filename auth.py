@@ -29,7 +29,7 @@ try:
 except ImportError:
     _REQUESTS_AVAILABLE = False
 
-API_BASE         = "https://unbound-api.vercel.app"
+API_BASE         = "https://unbound-api-amber.vercel.app"
 _KEYRING_SERVICE = "unbound-app"
 _KEY_ACCOUNT     = "api_key"
 _EMAIL_ACCOUNT   = "user_email"
