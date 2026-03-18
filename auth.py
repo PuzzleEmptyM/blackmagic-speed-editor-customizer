@@ -120,7 +120,7 @@ def sign_in(timeout: int = 120) -> bool:
     server_thread = threading.Thread(target=server.serve_forever, daemon=True)
     server_thread.start()
 
-    url = f"{API_BASE}/auth/device?port={port}&state={state}"
+    url = f"{API_BASE}/auth/device/start?port={port}&state={state}"
     webbrowser.open(url)
 
     result["done"].wait(timeout=timeout)
