@@ -57,8 +57,16 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: '12.0'
         run: python -m PyInstaller build.spec --clean
 
-      - name: Sign .app bundle (ad-hoc)
-        run: codesign --force --deep --sign - dist/SpeedEditorCustomizer.app
+      - name: Sign .app bundle (ad-hoc, ordered)
+        run: |
+          APP=dist/SpeedEditorCustomizer.app
+          # Sign inner binaries first (order matters — --deep gets it wrong)
+          find "$APP" -name "*.dylib" | xargs -I{} codesign --sign - --force --timestamp=none {}
+          find "$APP" -name "*.so"    | xargs -I{} codesign --sign - --force --timestamp=none {}
+          # Sign the main executable
+          codesign --sign - --force --timestamp=none "$APP/Contents/MacOS/SpeedEditorCustomizer"
+          # Sign the bundle last
+          codesign --sign - --force --timestamp=none "$APP"
 
       - name: Zip .app bundle
         run: cd dist && zip -r SpeedEditorCustomizer-macOS-AppleSilicon.zip SpeedEditorCustomizer.app
@@ -94,8 +102,16 @@ jobs:
         run: |
           arch -x86_64 /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m PyInstaller build.spec --clean
 
-      - name: Sign .app bundle (ad-hoc)
-        run: codesign --force --deep --sign - dist/SpeedEditorCustomizer.app
+      - name: Sign .app bundle (ad-hoc, ordered)
+        run: |
+          APP=dist/SpeedEditorCustomizer.app
+          # Sign inner binaries first (order matters — --deep gets it wrong)
+          find "$APP" -name "*.dylib" | xargs -I{} codesign --sign - --force --timestamp=none {}
+          find "$APP" -name "*.so"    | xargs -I{} codesign --sign - --force --timestamp=none {}
+          # Sign the main executable
+          codesign --sign - --force --timestamp=none "$APP/Contents/MacOS/SpeedEditorCustomizer"
+          # Sign the bundle last
+          codesign --sign - --force --timestamp=none "$APP"
 
       - name: Zip .app bundle
         run: cd dist && zip -r SpeedEditorCustomizer-macOS-Intel.zip SpeedEditorCustomizer.app
