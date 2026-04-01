@@ -1,4 +1,4 @@
-# calibrate.py — click each button on the Speed Editor photo to set positions
+# calibrate.py — click each button on the editor device photo to set positions
 #
 # Run this once: python calibrate.py
 # Click the CENTER of each button when prompted.
@@ -30,7 +30,7 @@ IMAGE_FILE = "editor img.png"
 class CalibrationWidget(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Speed Editor Button Calibration")
+        self.setWindowTitle("Editor Device Button Calibration")
         self.positions = {}
         self.current_idx = 0
         self.clicks = []  # all clicks so we can draw dots

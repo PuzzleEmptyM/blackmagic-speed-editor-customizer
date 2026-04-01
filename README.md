@@ -1,6 +1,6 @@
-# Unbound-editor-device-customizer
+# Unbound — Editor Device Customizer
 
-A desktop app for remapping the buttons on a Blackmagic Design Speed Editor to anything you want, without needing DaVinci Resolve open.
+A desktop app for remapping the buttons on a compatible editor controller to anything you want, without needing any host software open.
 
 ## Download
 
@@ -8,9 +8,9 @@ A desktop app for remapping the buttons on a Blackmagic Design Speed Editor to a
 
 | Platform | File |
 |----------|------|
-| Windows | `SpeedEditorCustomizer-Windows.zip` — extract and run `SpeedEditorCustomizer.exe` |
-| macOS — Apple Silicon | `SpeedEditorCustomizer-macOS-AppleSilicon.zip` — extract and open `SpeedEditorCustomizer.app` |
-| macOS — Intel (macOS 13+) | `SpeedEditorCustomizer-macOS-Intel.zip` — extract and open `SpeedEditorCustomizer.app` |
+| Windows | `UnboundCustomizer-Windows.zip` — extract and run `UnboundCustomizer.exe` |
+| macOS — Apple Silicon | `UnboundCustomizer-macOS-AppleSilicon.zip` — extract and open `UnboundCustomizer.app` |
+| macOS — Intel (macOS 13+) | `UnboundCustomizer-macOS-Intel.zip` — extract and open `UnboundCustomizer.app` |
 
 > Builds are updated automatically whenever the main branch changes.
 
@@ -31,7 +31,7 @@ A desktop app for remapping the buttons on a Blackmagic Design Speed Editor to a
 **Button actions**
 
 - **Hotkey** - tap a key combination (e.g. `ctrl+shift+s`)
-- **Hold Key** - hold a modifier key (e.g. alt, shift, delete, etc.) down for as long as the Speed Editor button is physically held
+- **Hold Key** - hold a modifier key (e.g. alt, shift, delete, etc.) down for as long as the device button is physically held
 - **Toggle Hold** - latch a modifier key down on first press, release it on second press
 - **App Switch** - bring any open window to focus by title substring
 - **App Launch** - launch an application by path, Start Menu shortcut, or URI
@@ -56,16 +56,16 @@ Layers appear as tabs at the top of the Buttons view. The active layer is marked
 
 **Device connection**
 
-The app connects to the Speed Editor over Bluetooth or USB without DaVinci Resolve running. It handles the proprietary challenge-response authentication on its own and re-authenticates automatically before the session times out.
+The app connects to the device over Bluetooth or USB without any host software running. It handles the proprietary challenge-response authentication on its own and re-authenticates automatically before the session times out.
 
-If the device is not available at startup (e.g. Resolve is using it), the app retries every 3 seconds in the background. The status bar shows the current connection state.
+If the device is not available at startup, the app retries every 3 seconds in the background. The status bar shows the current connection state.
 
 ## Requirements
 
 - Windows 10 or 11
 - macOS 13 or higher
 - Python 3.12
-- Blackmagic Design Speed Editor connected over Bluetooth or USB
+- Compatible editor controller connected over Bluetooth or USB
 
 ## Setup (Windows)
 
@@ -102,22 +102,11 @@ Then run:
 
 > Screen brightness control on macOS may require granting Accessibility permissions in System Settings → Privacy & Security.
 
-## Usage with DaVinci Resolve
-
-The recommended workflow is to not use Resolve's built-in Speed Editor integration at all. Instead:
-
-1. Configure keyboard shortcuts in Resolve under Keyboard Customization
-2. Map Speed Editor buttons to those keyboard inputs in this app
-
-This way Resolve sees standard keyboard input and the Speed Editor is fully under your control.
-
-If Resolve steals the device connection, quit and relaunch Resolve while this app is already open. The app will connect and authenticate without interfering with Resolve's session.
-
 ## Using Toggle Hold for modifier+scroll
 
 1. Map a button to **Toggle Hold** and enter `alt` (or `ctrl`, `shift`, etc.)
 2. Press the button once to latch the modifier key down
-3. Scroll your mouse wheel in Resolve (or any app)
+3. Scroll your mouse wheel in any app
 4. Press the button again to release the modifier
 
 To verify the latch is active before testing scroll, press Tab on your physical keyboard. If Alt+Tab triggers, the modifier is held correctly.
@@ -129,7 +118,7 @@ To verify the latch is active before testing scroll, press Tab on your physical 
 | `main.py` | Entry point, HID thread, layer stack, dial override state |
 | `app.py` | PyQt6 GUI, action panel, layer tabs, button grid, dial config |
 | `config.py` | Load/save config.json, layer/dial management helpers |
-| `hid_layer.py` | Speed Editor HID abstraction and authentication |
+| `hid_layer.py` | Editor device HID abstraction and authentication |
 | `actions/hotkey.py` | Keyboard event sending via pynput and win32api |
 | `actions/app_switch.py` | Window focus via pywin32 |
 | `actions/obs.py` | OBS WebSocket client via obsws-python |
@@ -138,7 +127,7 @@ To verify the latch is active before testing scroll, press Tab on your physical 
 
 ## Authentication
 
-The Speed Editor requires a challenge-response handshake before it sends input events. The algorithm was reverse-engineered by Sylvain Munaut (Apache 2.0) and is reproduced in `hid_layer.py`. The app authenticates on connect and schedules a re-auth timer before the session expires.
+The device requires a challenge-response handshake before it sends input events. The algorithm was reverse-engineered by Sylvain Munaut (Apache 2.0) and is reproduced in `hid_layer.py`. The app authenticates on connect and schedules a re-auth timer before the session expires.
 
 ## Credits
 

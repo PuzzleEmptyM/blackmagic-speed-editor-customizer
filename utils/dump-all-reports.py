@@ -5,8 +5,8 @@
 import time
 from pywinusb import hid
 
-VENDOR_ID  = 0x1EDB  # Your Speed Editor VID
-PRODUCT_ID = 0xDA0E  # Your Speed Editor PID
+VENDOR_ID  = 0x1EDB  # Device vendor ID
+PRODUCT_ID = 0xDA0E  # Device product ID
 
 def input_handler(data):
     """
@@ -29,10 +29,10 @@ def feature_handler(data):
     print(f"[FEATURE-REPORT] ReportID=0x{report_id:02x}  Raw={hex_bytes}")
 
 def main():
-    # 1) Locate the Speed Editor by VID/PID
+    # 1) Locate the device by VID/PID
     all_devices = hid.HidDeviceFilter(vendor_id=VENDOR_ID, product_id=PRODUCT_ID).get_devices()
     if not all_devices:
-        print("⚠️  Speed Editor not found. Make sure it’s plugged in and DaVinci Resolve is closed.")
+        print("⚠️  Device not found. Make sure it’s plugged in and no other software is using it.")
         return
 
     device = all_devices[0]
@@ -45,7 +45,7 @@ def main():
     # 3) Find all feature reports
     feature_reports = device.find_feature_reports()
     if not feature_reports:
-        print("⚠️  No feature reports found. (Ensure Resolve is closed so the HID interface is free.)")
+        print("⚠️  No feature reports found. (Ensure no other software is holding the HID interface.)")
     else:
         print(f"🔍 Found {len(feature_reports)} feature report(s).")
         for rpt in feature_reports:

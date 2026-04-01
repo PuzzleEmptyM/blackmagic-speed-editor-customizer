@@ -1,4 +1,4 @@
-# hid_layer.py — Blackmagic Speed Editor HID abstraction
+# hid_layer.py — Editor Device HID abstraction
 #
 # Authentication algorithm by Sylvain Munaut <tnt@246tNt.com> (Apache-2.0)
 # https://github.com/octimot/blackmagic-speededitor
